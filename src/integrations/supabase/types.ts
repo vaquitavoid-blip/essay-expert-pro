@@ -14,16 +14,535 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      ai_usage_log: {
+        Row: {
+          completion_tokens: number | null
+          created_at: string
+          error_message: string | null
+          feature: string
+          id: string
+          latency_ms: number | null
+          model: string
+          ok: boolean
+          prompt_tokens: number | null
+          user_id: string | null
+        }
+        Insert: {
+          completion_tokens?: number | null
+          created_at?: string
+          error_message?: string | null
+          feature: string
+          id?: string
+          latency_ms?: number | null
+          model: string
+          ok?: boolean
+          prompt_tokens?: number | null
+          user_id?: string | null
+        }
+        Update: {
+          completion_tokens?: number | null
+          created_at?: string
+          error_message?: string | null
+          feature?: string
+          id?: string
+          latency_ms?: number | null
+          model?: string
+          ok?: boolean
+          prompt_tokens?: number | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      calibration_anchors: {
+        Row: {
+          active: boolean
+          band_label: string
+          created_at: string
+          created_by: string | null
+          essay_text: string
+          id: string
+          mark: number
+          max_mark: number
+          notes: string | null
+          question: string
+        }
+        Insert: {
+          active?: boolean
+          band_label?: string
+          created_at?: string
+          created_by?: string | null
+          essay_text: string
+          id?: string
+          mark: number
+          max_mark?: number
+          notes?: string | null
+          question: string
+        }
+        Update: {
+          active?: boolean
+          band_label?: string
+          created_at?: string
+          created_by?: string | null
+          essay_text?: string
+          id?: string
+          mark?: number
+          max_mark?: number
+          notes?: string | null
+          question?: string
+        }
+        Relationships: []
+      }
+      document_chunks: {
+        Row: {
+          chunk_index: number
+          content: string
+          created_at: string
+          document_id: string
+          embedding: string | null
+          heading: string | null
+          id: string
+          model_version: string
+          token_estimate: number
+          topic_id: string | null
+        }
+        Insert: {
+          chunk_index: number
+          content: string
+          created_at?: string
+          document_id: string
+          embedding?: string | null
+          heading?: string | null
+          id?: string
+          model_version?: string
+          token_estimate?: number
+          topic_id?: string | null
+        }
+        Update: {
+          chunk_index?: number
+          content?: string
+          created_at?: string
+          document_id?: string
+          embedding?: string | null
+          heading?: string | null
+          id?: string
+          model_version?: string
+          token_estimate?: number
+          topic_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "document_chunks_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "knowledge_documents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "document_chunks_topic_id_fkey"
+            columns: ["topic_id"]
+            isOneToOne: false
+            referencedRelation: "topics"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      essay_versions: {
+        Row: {
+          ao1_awarded: number | null
+          ao2_awarded: number | null
+          ao3_awarded: number | null
+          audited: boolean
+          confidence: number | null
+          created_at: string
+          essay_id: string
+          essay_text: string
+          grading: Json
+          id: string
+          model: string | null
+          sources: Json
+          total_mark: number | null
+          user_id: string
+          version: number
+        }
+        Insert: {
+          ao1_awarded?: number | null
+          ao2_awarded?: number | null
+          ao3_awarded?: number | null
+          audited?: boolean
+          confidence?: number | null
+          created_at?: string
+          essay_id: string
+          essay_text: string
+          grading?: Json
+          id?: string
+          model?: string | null
+          sources?: Json
+          total_mark?: number | null
+          user_id: string
+          version?: number
+        }
+        Update: {
+          ao1_awarded?: number | null
+          ao2_awarded?: number | null
+          ao3_awarded?: number | null
+          audited?: boolean
+          confidence?: number | null
+          created_at?: string
+          essay_id?: string
+          essay_text?: string
+          grading?: Json
+          id?: string
+          model?: string | null
+          sources?: Json
+          total_mark?: number | null
+          user_id?: string
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "essay_versions_essay_id_fkey"
+            columns: ["essay_id"]
+            isOneToOne: false
+            referencedRelation: "essays"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      essays: {
+        Row: {
+          created_at: string
+          id: string
+          latest_mark: number | null
+          max_mark: number
+          question: string
+          topic_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          latest_mark?: number | null
+          max_mark?: number
+          question: string
+          topic_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          latest_mark?: number | null
+          max_mark?: number
+          question?: string
+          topic_id?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "essays_topic_id_fkey"
+            columns: ["topic_id"]
+            isOneToOne: false
+            referencedRelation: "topics"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      knowledge_documents: {
+        Row: {
+          char_count: number
+          chunk_count: number
+          content_hash: string | null
+          created_at: string
+          doc_type: Database["public"]["Enums"]["doc_type"]
+          error_message: string | null
+          exam_series: string | null
+          id: string
+          source_name: string | null
+          status: Database["public"]["Enums"]["ingest_status"]
+          storage_path: string | null
+          subject_id: string | null
+          title: string
+          topic_id: string | null
+          unit_id: string | null
+          updated_at: string
+          uploaded_by: string | null
+          version: number
+        }
+        Insert: {
+          char_count?: number
+          chunk_count?: number
+          content_hash?: string | null
+          created_at?: string
+          doc_type?: Database["public"]["Enums"]["doc_type"]
+          error_message?: string | null
+          exam_series?: string | null
+          id?: string
+          source_name?: string | null
+          status?: Database["public"]["Enums"]["ingest_status"]
+          storage_path?: string | null
+          subject_id?: string | null
+          title: string
+          topic_id?: string | null
+          unit_id?: string | null
+          updated_at?: string
+          uploaded_by?: string | null
+          version?: number
+        }
+        Update: {
+          char_count?: number
+          chunk_count?: number
+          content_hash?: string | null
+          created_at?: string
+          doc_type?: Database["public"]["Enums"]["doc_type"]
+          error_message?: string | null
+          exam_series?: string | null
+          id?: string
+          source_name?: string | null
+          status?: Database["public"]["Enums"]["ingest_status"]
+          storage_path?: string | null
+          subject_id?: string | null
+          title?: string
+          topic_id?: string | null
+          unit_id?: string | null
+          updated_at?: string
+          uploaded_by?: string | null
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "knowledge_documents_subject_id_fkey"
+            columns: ["subject_id"]
+            isOneToOne: false
+            referencedRelation: "subjects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "knowledge_documents_topic_id_fkey"
+            columns: ["topic_id"]
+            isOneToOne: false
+            referencedRelation: "topics"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "knowledge_documents_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
+            referencedRelation: "units"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          full_name: string | null
+          id: string
+          school: string | null
+          updated_at: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          full_name?: string | null
+          id: string
+          school?: string | null
+          updated_at?: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          full_name?: string | null
+          id?: string
+          school?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      subjects: {
+        Row: {
+          code: string
+          created_at: string
+          id: string
+          level: string
+          name: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          id?: string
+          level?: string
+          name: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          id?: string
+          level?: string
+          name?: string
+        }
+        Relationships: []
+      }
+      topics: {
+        Row: {
+          code: string | null
+          created_at: string
+          difficulty: number
+          id: string
+          is_extension: boolean
+          learning_outcomes: string[]
+          name: string
+          parent_id: string | null
+          position: number
+          syllabus_ref: string | null
+          unit_id: string
+        }
+        Insert: {
+          code?: string | null
+          created_at?: string
+          difficulty?: number
+          id?: string
+          is_extension?: boolean
+          learning_outcomes?: string[]
+          name: string
+          parent_id?: string | null
+          position?: number
+          syllabus_ref?: string | null
+          unit_id: string
+        }
+        Update: {
+          code?: string | null
+          created_at?: string
+          difficulty?: number
+          id?: string
+          is_extension?: boolean
+          learning_outcomes?: string[]
+          name?: string
+          parent_id?: string | null
+          position?: number
+          syllabus_ref?: string | null
+          unit_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "topics_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "topics"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "topics_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
+            referencedRelation: "units"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      units: {
+        Row: {
+          code: string
+          created_at: string
+          id: string
+          name: string
+          paper: string | null
+          position: number
+          subject_id: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          id?: string
+          name: string
+          paper?: string | null
+          position?: number
+          subject_id: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          id?: string
+          name?: string
+          paper?: string | null
+          position?: number
+          subject_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "units_subject_id_fkey"
+            columns: ["subject_id"]
+            isOneToOne: false
+            referencedRelation: "subjects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
+      is_staff: { Args: { _user_id: string }; Returns: boolean }
+      match_document_chunks: {
+        Args: {
+          filter_doc_types?: Database["public"]["Enums"]["doc_type"][]
+          filter_topic_id?: string
+          match_count?: number
+          query_embedding: string
+        }
+        Returns: {
+          chunk_id: string
+          content: string
+          doc_type: Database["public"]["Enums"]["doc_type"]
+          document_id: string
+          document_title: string
+          heading: string
+          similarity: number
+        }[]
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "student" | "teacher" | "admin"
+      doc_type:
+        | "coursebook"
+        | "syllabus"
+        | "mark_scheme"
+        | "past_paper"
+        | "examiner_report"
+        | "notes"
+        | "other"
+      ingest_status: "pending" | "processing" | "ready" | "failed"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +669,18 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["student", "teacher", "admin"],
+      doc_type: [
+        "coursebook",
+        "syllabus",
+        "mark_scheme",
+        "past_paper",
+        "examiner_report",
+        "notes",
+        "other",
+      ],
+      ingest_status: ["pending", "processing", "ready", "failed"],
+    },
   },
 } as const
