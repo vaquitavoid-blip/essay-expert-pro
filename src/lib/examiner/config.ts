@@ -20,9 +20,13 @@ export const TEMPERATURE_TUTOR = 0.4;
 
 export const MAX_ANCHORS_PER_BAND = 2;
 
-/** Gemini stays the primary LLM, exactly as in the original pipeline. */
-export const MODEL_EXAMINER = "google/gemini-2.5-pro";
-export const MODEL_FAST = "google/gemini-2.5-flash";
+/**
+ * Marking runs two sequential passes (examiner + independent audit), so the
+ * examiner model is chosen for latency as well as judgement — the original
+ * Gemini Pro pipeline pushed a single submission past a minute.
+ */
+export const MODEL_EXAMINER = "openai/gpt-5.6-sol";
+export const MODEL_FAST = "openai/gpt-5.6-sol";
 export const MODEL_EMBEDDING = "google/gemini-embedding-2";
 export const EMBEDDING_DIMS = 3072;
 
