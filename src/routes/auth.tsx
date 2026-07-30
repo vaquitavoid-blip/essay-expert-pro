@@ -120,6 +120,10 @@ function AuthPage() {
                   value={password}
                   onChange={setPassword}
                 />
+                <p className="-mt-1 text-xs text-muted-foreground">
+                  Any password of 6 characters or more works — words, spaces and simple
+                  phrases are all fine.
+                </p>
                 <Button type="submit" className="w-full" disabled={busy}>
                   {busy ? "Creating account…" : "Create account"}
                 </Button>
