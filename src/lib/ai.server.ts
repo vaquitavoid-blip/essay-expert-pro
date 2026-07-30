@@ -35,6 +35,8 @@ export type ChatOptions = {
   temperature?: number;
   json?: boolean;
   maxCompletionTokens?: number;
+  /** GPT-5 family: must be sent explicitly, and "none" keeps marking fast. */
+  reasoningEffort?: "none" | "low" | "medium" | "high";
 };
 
 export type ChatResult = {
@@ -54,6 +56,11 @@ export async function chat(options: ChatOptions): Promise<ChatResult> {
   if (typeof options.temperature === "number") body.temperature = options.temperature;
   if (options.json) body.response_format = { type: "json_object" };
   if (options.maxCompletionTokens) body.max_completion_tokens = options.maxCompletionTokens;
+  if (options.model.startsWith("openai/gpt-5")) {
+    body.reasoning_effort = options.reasoningEffort ?? "none";
+    // GPT-5 models reject a non-default temperature on chat completions.
+    delete body.temperature;
+  }
 
   const response = await fetch(`${GATEWAY}/chat/completions`, {
     method: "POST",
