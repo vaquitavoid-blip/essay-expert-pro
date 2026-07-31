@@ -16,6 +16,7 @@ import { Route as AuthenticatedCalibrationRouteImport } from './routes/_authenti
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedGradeRouteImport } from './routes/_authenticated/grade'
 import { Route as AuthenticatedKnowledgeRouteImport } from './routes/_authenticated/knowledge'
+import { Route as AuthenticatedPracticeRouteImport } from './routes/_authenticated/practice'
 import { Route as AuthenticatedEssayEssayIdRouteImport } from './routes/_authenticated/essay.$essayId'
 
 const IndexRoute = IndexRouteImport.update({
@@ -53,6 +54,11 @@ const AuthenticatedKnowledgeRoute = AuthenticatedKnowledgeRouteImport.update({
   path: '/knowledge',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedPracticeRoute = AuthenticatedPracticeRouteImport.update({
+  id: '/practice',
+  path: '/practice',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedEssayEssayIdRoute =
   AuthenticatedEssayEssayIdRouteImport.update({
     id: '/essay/$essayId',
@@ -67,6 +73,7 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/grade': typeof AuthenticatedGradeRoute
   '/knowledge': typeof AuthenticatedKnowledgeRoute
+  '/practice': typeof AuthenticatedPracticeRoute
   '/essay/$essayId': typeof AuthenticatedEssayEssayIdRoute
 }
 export interface FileRoutesByTo {
@@ -76,6 +83,7 @@ export interface FileRoutesByTo {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/grade': typeof AuthenticatedGradeRoute
   '/knowledge': typeof AuthenticatedKnowledgeRoute
+  '/practice': typeof AuthenticatedPracticeRoute
   '/essay/$essayId': typeof AuthenticatedEssayEssayIdRoute
 }
 export interface FileRoutesById {
@@ -87,6 +95,7 @@ export interface FileRoutesById {
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/grade': typeof AuthenticatedGradeRoute
   '/_authenticated/knowledge': typeof AuthenticatedKnowledgeRoute
+  '/_authenticated/practice': typeof AuthenticatedPracticeRoute
   '/_authenticated/essay/$essayId': typeof AuthenticatedEssayEssayIdRoute
 }
 export interface FileRouteTypes {
@@ -98,6 +107,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/grade'
     | '/knowledge'
+    | '/practice'
     | '/essay/$essayId'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -107,6 +117,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/grade'
     | '/knowledge'
+    | '/practice'
     | '/essay/$essayId'
   id:
     | '__root__'
@@ -117,6 +128,7 @@ export interface FileRouteTypes {
     | '/_authenticated/dashboard'
     | '/_authenticated/grade'
     | '/_authenticated/knowledge'
+    | '/_authenticated/practice'
     | '/_authenticated/essay/$essayId'
   fileRoutesById: FileRoutesById
 }
@@ -177,6 +189,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedKnowledgeRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/practice': {
+      id: '/_authenticated/practice'
+      path: '/practice'
+      fullPath: '/practice'
+      preLoaderRoute: typeof AuthenticatedPracticeRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/essay/$essayId': {
       id: '/_authenticated/essay/$essayId'
       path: '/essay/$essayId'
@@ -192,6 +211,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedGradeRoute: typeof AuthenticatedGradeRoute
   AuthenticatedKnowledgeRoute: typeof AuthenticatedKnowledgeRoute
+  AuthenticatedPracticeRoute: typeof AuthenticatedPracticeRoute
   AuthenticatedEssayEssayIdRoute: typeof AuthenticatedEssayEssayIdRoute
 }
 
@@ -200,6 +220,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedGradeRoute: AuthenticatedGradeRoute,
   AuthenticatedKnowledgeRoute: AuthenticatedKnowledgeRoute,
+  AuthenticatedPracticeRoute: AuthenticatedPracticeRoute,
   AuthenticatedEssayEssayIdRoute: AuthenticatedEssayEssayIdRoute,
 }
 
@@ -214,13 +235,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
