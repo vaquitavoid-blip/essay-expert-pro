@@ -21,6 +21,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import { extractTextFromFile } from "@/lib/extract-text";
+import { getMe } from "@/lib/account.functions";
 import {
   deleteDocument,
   embedNextBatch,
@@ -62,6 +63,8 @@ type Stage = { phase: "idle" | "reading" | "chunking" | "embedding"; value: numb
 
 function KnowledgePage() {
   const queryClient = useQueryClient();
+  const fetchMe = useServerFn(getMe);
+  const me = useQuery({ queryKey: ["me"], queryFn: () => fetchMe() });
   const ingest = useServerFn(ingestDocument);
   const embedBatch = useServerFn(embedNextBatch);
   const removeDoc = useServerFn(deleteDocument);
@@ -85,6 +88,8 @@ function KnowledgePage() {
   });
 
   const busy = stage.phase !== "idle";
+
+  const isStaff = me.data?.isStaff ?? false;
 
   const reset = () => {
     setTitle("");
