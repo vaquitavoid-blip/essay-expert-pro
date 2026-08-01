@@ -334,6 +334,57 @@ export type Database = {
           },
         ]
       }
+      mcq_attempts: {
+        Row: {
+          answers: Json
+          completed_at: string | null
+          created_at: string
+          id: string
+          level: string
+          model: string | null
+          questions: Json
+          score: number | null
+          status: string
+          title: string
+          topic: string | null
+          total: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          answers?: Json
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          level?: string
+          model?: string | null
+          questions?: Json
+          score?: number | null
+          status?: string
+          title?: string
+          topic?: string | null
+          total?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          answers?: Json
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          level?: string
+          model?: string | null
+          questions?: Json
+          score?: number | null
+          status?: string
+          title?: string
+          topic?: string | null
+          total?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
