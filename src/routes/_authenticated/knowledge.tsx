@@ -171,6 +171,18 @@ function KnowledgePage() {
         description="Add your coursebook, the 9708 syllabus, mark schemes and examiner reports. Every mark is then grounded in these documents and cited back to them."
       />
 
+      {me.isLoading ? null : !isStaff ? (
+        <div className="px-5 py-16 md:px-8">
+          <div className="panel mx-auto max-w-md px-6 py-10 text-center">
+            <h2 className="text-sm font-semibold">Teachers only</h2>
+            <p className="mt-2 text-sm text-muted-foreground">
+              The shared knowledge library is managed by your teachers. Everything in it already
+              grounds your marking, MCQ papers and coaching automatically.
+            </p>
+          </div>
+        </div>
+      ) : (
+
       <div className="grid gap-6 px-5 py-6 md:px-8 lg:grid-cols-[minmax(0,420px)_minmax(0,1fr)]">
         <div className="space-y-6">
           <div className="panel space-y-4 p-5">
