@@ -4,6 +4,7 @@ import {
   BookOpen,
   GraduationCap,
   LayoutDashboard,
+  ListChecks,
   LogOut,
   PenLine,
   Target,
@@ -19,7 +20,8 @@ const NAV = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard, staffOnly: false },
   { to: "/grade", label: "Essay marking", icon: PenLine, staffOnly: false },
   { to: "/practice", label: "AO skills coach", icon: Dumbbell, staffOnly: false },
-  { to: "/knowledge", label: "Knowledge base", icon: BookOpen, staffOnly: false },
+  { to: "/mcq", label: "MCQ papers", icon: ListChecks, staffOnly: false },
+  { to: "/knowledge", label: "Knowledge base", icon: BookOpen, staffOnly: true },
   { to: "/calibration", label: "Calibration", icon: Target, staffOnly: true },
 ] as const;
 
