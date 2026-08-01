@@ -16,6 +16,7 @@ import { cn } from "@/lib/utils";
 import {
   createMcqPaper,
   generateMcqBatch,
+  getMcqAttempt,
   listMcqAttempts,
   submitMcqPaper,
 } from "@/lib/mcq.functions";
@@ -50,6 +51,7 @@ function McqPage() {
   const nextBatch = useServerFn(generateMcqBatch);
   const submit = useServerFn(submitMcqPaper);
   const fetchAttempts = useServerFn(listMcqAttempts);
+  const loadAttempt = useServerFn(getMcqAttempt);
 
   const attempts = useQuery({ queryKey: ["mcq-attempts"], queryFn: () => fetchAttempts() });
 
@@ -81,8 +83,7 @@ function McqPage() {
         setProgress(Math.round((batch.count / batch.total) * 100));
       }
 
-      const { getMcqAttempt } = await import("@/lib/mcq.functions");
-      const full = await getMcqAttempt({ data: { attemptId: paper.attemptId } });
+      const full = await loadAttempt({ data: { attemptId: paper.attemptId } });
       setQuestions(full.questions);
       toast.success(`${full.questions.length} questions ready.`);
       queryClient.invalidateQueries({ queryKey: ["mcq-attempts"] });
@@ -110,8 +111,7 @@ function McqPage() {
 
   const resume = async (id: string) => {
     try {
-      const { getMcqAttempt } = await import("@/lib/mcq.functions");
-      const full = await getMcqAttempt({ data: { attemptId: id } });
+      const full = await loadAttempt({ data: { attemptId: id } });
       setAttemptId(id);
       setQuestions(full.questions);
       setAnswers(full.answers ?? {});

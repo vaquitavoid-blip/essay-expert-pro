@@ -16,6 +16,7 @@ import { Route as AuthenticatedCalibrationRouteImport } from './routes/_authenti
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedGradeRouteImport } from './routes/_authenticated/grade'
 import { Route as AuthenticatedKnowledgeRouteImport } from './routes/_authenticated/knowledge'
+import { Route as AuthenticatedMcqRouteImport } from './routes/_authenticated/mcq'
 import { Route as AuthenticatedPracticeRouteImport } from './routes/_authenticated/practice'
 import { Route as AuthenticatedEssayEssayIdRouteImport } from './routes/_authenticated/essay.$essayId'
 
@@ -54,6 +55,11 @@ const AuthenticatedKnowledgeRoute = AuthenticatedKnowledgeRouteImport.update({
   path: '/knowledge',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedMcqRoute = AuthenticatedMcqRouteImport.update({
+  id: '/mcq',
+  path: '/mcq',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedPracticeRoute = AuthenticatedPracticeRouteImport.update({
   id: '/practice',
   path: '/practice',
@@ -73,6 +79,7 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/grade': typeof AuthenticatedGradeRoute
   '/knowledge': typeof AuthenticatedKnowledgeRoute
+  '/mcq': typeof AuthenticatedMcqRoute
   '/practice': typeof AuthenticatedPracticeRoute
   '/essay/$essayId': typeof AuthenticatedEssayEssayIdRoute
 }
@@ -83,6 +90,7 @@ export interface FileRoutesByTo {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/grade': typeof AuthenticatedGradeRoute
   '/knowledge': typeof AuthenticatedKnowledgeRoute
+  '/mcq': typeof AuthenticatedMcqRoute
   '/practice': typeof AuthenticatedPracticeRoute
   '/essay/$essayId': typeof AuthenticatedEssayEssayIdRoute
 }
@@ -95,6 +103,7 @@ export interface FileRoutesById {
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/grade': typeof AuthenticatedGradeRoute
   '/_authenticated/knowledge': typeof AuthenticatedKnowledgeRoute
+  '/_authenticated/mcq': typeof AuthenticatedMcqRoute
   '/_authenticated/practice': typeof AuthenticatedPracticeRoute
   '/_authenticated/essay/$essayId': typeof AuthenticatedEssayEssayIdRoute
 }
@@ -107,6 +116,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/grade'
     | '/knowledge'
+    | '/mcq'
     | '/practice'
     | '/essay/$essayId'
   fileRoutesByTo: FileRoutesByTo
@@ -117,6 +127,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/grade'
     | '/knowledge'
+    | '/mcq'
     | '/practice'
     | '/essay/$essayId'
   id:
@@ -128,6 +139,7 @@ export interface FileRouteTypes {
     | '/_authenticated/dashboard'
     | '/_authenticated/grade'
     | '/_authenticated/knowledge'
+    | '/_authenticated/mcq'
     | '/_authenticated/practice'
     | '/_authenticated/essay/$essayId'
   fileRoutesById: FileRoutesById
@@ -189,6 +201,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedKnowledgeRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/mcq': {
+      id: '/_authenticated/mcq'
+      path: '/mcq'
+      fullPath: '/mcq'
+      preLoaderRoute: typeof AuthenticatedMcqRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/practice': {
       id: '/_authenticated/practice'
       path: '/practice'
@@ -211,6 +230,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedGradeRoute: typeof AuthenticatedGradeRoute
   AuthenticatedKnowledgeRoute: typeof AuthenticatedKnowledgeRoute
+  AuthenticatedMcqRoute: typeof AuthenticatedMcqRoute
   AuthenticatedPracticeRoute: typeof AuthenticatedPracticeRoute
   AuthenticatedEssayEssayIdRoute: typeof AuthenticatedEssayEssayIdRoute
 }
@@ -220,6 +240,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedGradeRoute: AuthenticatedGradeRoute,
   AuthenticatedKnowledgeRoute: AuthenticatedKnowledgeRoute,
+  AuthenticatedMcqRoute: AuthenticatedMcqRoute,
   AuthenticatedPracticeRoute: AuthenticatedPracticeRoute,
   AuthenticatedEssayEssayIdRoute: AuthenticatedEssayEssayIdRoute,
 }
