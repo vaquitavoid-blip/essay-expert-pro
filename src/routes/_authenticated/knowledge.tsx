@@ -396,6 +396,7 @@ function KnowledgePage() {
           )}
         </div>
       </div>
+      )}
     </>
   );
 }
