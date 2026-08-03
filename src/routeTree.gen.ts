@@ -15,6 +15,7 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedCalibrationRouteImport } from './routes/_authenticated/calibration'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedDiagramsRouteImport } from './routes/_authenticated/diagrams'
+import { Route as AuthenticatedEssayGeneratorRouteImport } from './routes/_authenticated/essay-generator'
 import { Route as AuthenticatedGradeRouteImport } from './routes/_authenticated/grade'
 import { Route as AuthenticatedKnowledgeRouteImport } from './routes/_authenticated/knowledge'
 import { Route as AuthenticatedMcqRouteImport } from './routes/_authenticated/mcq'
@@ -51,6 +52,12 @@ const AuthenticatedDiagramsRoute = AuthenticatedDiagramsRouteImport.update({
   path: '/diagrams',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedEssayGeneratorRoute =
+  AuthenticatedEssayGeneratorRouteImport.update({
+    id: '/essay-generator',
+    path: '/essay-generator',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedGradeRoute = AuthenticatedGradeRouteImport.update({
   id: '/grade',
   path: '/grade',
@@ -84,6 +91,7 @@ export interface FileRoutesByFullPath {
   '/calibration': typeof AuthenticatedCalibrationRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/diagrams': typeof AuthenticatedDiagramsRoute
+  '/essay-generator': typeof AuthenticatedEssayGeneratorRoute
   '/grade': typeof AuthenticatedGradeRoute
   '/knowledge': typeof AuthenticatedKnowledgeRoute
   '/mcq': typeof AuthenticatedMcqRoute
@@ -96,6 +104,7 @@ export interface FileRoutesByTo {
   '/calibration': typeof AuthenticatedCalibrationRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/diagrams': typeof AuthenticatedDiagramsRoute
+  '/essay-generator': typeof AuthenticatedEssayGeneratorRoute
   '/grade': typeof AuthenticatedGradeRoute
   '/knowledge': typeof AuthenticatedKnowledgeRoute
   '/mcq': typeof AuthenticatedMcqRoute
@@ -110,6 +119,7 @@ export interface FileRoutesById {
   '/_authenticated/calibration': typeof AuthenticatedCalibrationRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/diagrams': typeof AuthenticatedDiagramsRoute
+  '/_authenticated/essay-generator': typeof AuthenticatedEssayGeneratorRoute
   '/_authenticated/grade': typeof AuthenticatedGradeRoute
   '/_authenticated/knowledge': typeof AuthenticatedKnowledgeRoute
   '/_authenticated/mcq': typeof AuthenticatedMcqRoute
@@ -124,6 +134,7 @@ export interface FileRouteTypes {
     | '/calibration'
     | '/dashboard'
     | '/diagrams'
+    | '/essay-generator'
     | '/grade'
     | '/knowledge'
     | '/mcq'
@@ -136,6 +147,7 @@ export interface FileRouteTypes {
     | '/calibration'
     | '/dashboard'
     | '/diagrams'
+    | '/essay-generator'
     | '/grade'
     | '/knowledge'
     | '/mcq'
@@ -149,6 +161,7 @@ export interface FileRouteTypes {
     | '/_authenticated/calibration'
     | '/_authenticated/dashboard'
     | '/_authenticated/diagrams'
+    | '/_authenticated/essay-generator'
     | '/_authenticated/grade'
     | '/_authenticated/knowledge'
     | '/_authenticated/mcq'
@@ -206,6 +219,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDiagramsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/essay-generator': {
+      id: '/_authenticated/essay-generator'
+      path: '/essay-generator'
+      fullPath: '/essay-generator'
+      preLoaderRoute: typeof AuthenticatedEssayGeneratorRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/grade': {
       id: '/_authenticated/grade'
       path: '/grade'
@@ -248,6 +268,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedCalibrationRoute: typeof AuthenticatedCalibrationRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedDiagramsRoute: typeof AuthenticatedDiagramsRoute
+  AuthenticatedEssayGeneratorRoute: typeof AuthenticatedEssayGeneratorRoute
   AuthenticatedGradeRoute: typeof AuthenticatedGradeRoute
   AuthenticatedKnowledgeRoute: typeof AuthenticatedKnowledgeRoute
   AuthenticatedMcqRoute: typeof AuthenticatedMcqRoute
@@ -259,6 +280,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedCalibrationRoute: AuthenticatedCalibrationRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedDiagramsRoute: AuthenticatedDiagramsRoute,
+  AuthenticatedEssayGeneratorRoute: AuthenticatedEssayGeneratorRoute,
   AuthenticatedGradeRoute: AuthenticatedGradeRoute,
   AuthenticatedKnowledgeRoute: AuthenticatedKnowledgeRoute,
   AuthenticatedMcqRoute: AuthenticatedMcqRoute,
