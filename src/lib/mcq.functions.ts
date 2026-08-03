@@ -169,6 +169,7 @@ export const submitMcqPaper = createServerFn({ method: "POST" })
         topic: question.topic,
         syllabusRef: question.syllabusRef,
         skill: question.skill,
+        diagramId: question.diagramId ?? null,
       };
     });
 
