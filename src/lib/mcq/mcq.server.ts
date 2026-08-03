@@ -8,6 +8,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 
 import { chat } from "../ai.server";
 import { renderContext, retrieve } from "../retrieval.server";
+import { DIAGRAM_IDS, DIAGRAM_INDEX_FOR_AI } from "../diagrams/catalog";
 import { MODEL_EXAMINER } from "../examiner/config";
 import { extractFirstJsonObject } from "../examiner/json";
 
@@ -23,6 +24,8 @@ export type McqQuestion = {
   topic: string;
   syllabusRef: string | null;
   skill: "knowledge" | "application" | "analysis";
+  /** Optional diagram from the library shown above the stem. */
+  diagramId?: string | null;
 };
 
 /** Paper 1 (AS) and Paper 3 (A Level) both run 30 questions, 1 mark each. */
@@ -58,7 +61,8 @@ Return ONLY one JSON object:
     "distractor_notes": { "A": string, "B": string, "C": string, "D": string }, // the misconception each wrong option tests
     "topic": string,                 // short syllabus topic name
     "syllabus_ref": string,          // e.g. "2.2" if known, else ""
-    "skill": "knowledge" | "application" | "analysis"
+    "skill": "knowledge" | "application" | "analysis",
+    "diagram_id": string             // an id from the diagram library, or "" for a text-only question
   }
 ] }
 `.trim();
@@ -75,6 +79,21 @@ const HOUSE_STYLE = [
   "- Never write 'all of the above', 'none of the above', or negated options with 'not both'.",
   "- Use realistic contexts and numbers (countries, firms, percentages) as the real paper does.",
   "- Mix difficulty: roughly 40% knowledge/recall, 40% application, 20% analysis.",
+].join("\n");
+
+const DIAGRAM_RULES = [
+  "Diagram questions:",
+  "- Roughly 6 to 9 of every 10 questions stay text-only ('diagram_id': '').",
+  "- For the rest, set 'diagram_id' to one id from the diagram library below. The diagram is rendered",
+  "  above the stem exactly as the library draws it, so the stem MUST be answerable from that diagram.",
+  "- Word those stems the way the real paper does: 'The diagram shows ... Which area represents consumer surplus?',",
+  "  'In the diagram, what does the movement from E1 to E2 show?', 'Which curve shift would cause the change shown?'",
+  "- Never invent labels, curves, areas or numbers that the chosen diagram does not actually contain.",
+  "  Only refer to labels listed in the diagram description.",
+  "- Never write 'see the diagram below' for a text-only question, and never leave diagram_id set to an id you did not use.",
+  "",
+  "DIAGRAM LIBRARY (id — title (section, topic): what it shows):",
+  DIAGRAM_INDEX_FOR_AI,
 ].join("\n");
 
 export async function generateMcqBatchQuestions(
@@ -112,6 +131,8 @@ export async function generateMcqBatchQuestions(
       : "Paper 1 (AS Level) multiple choice questions.",
     "",
     HOUSE_STYLE,
+    "",
+    DIAGRAM_RULES,
     "",
     "Every question must be answerable from the syllabus content below. Prefer the wording,",
     "definitions and examples in this source material so the paper matches the taught course.",
@@ -163,6 +184,7 @@ export async function generateMcqBatchQuestions(
         if (typeof note === "string" && note.trim()) distractorNotes[key] = note.trim();
       }
       const skill = String(q.skill ?? "knowledge");
+      const diagramId = String(q.diagram_id ?? "").trim();
       return {
         number: 0,
         stem: String(q.stem ?? "").trim(),
@@ -172,6 +194,7 @@ export async function generateMcqBatchQuestions(
         distractorNotes,
         topic: String(q.topic ?? focus).trim(),
         syllabusRef: String(q.syllabus_ref ?? "").trim() || null,
+        diagramId: DIAGRAM_IDS.includes(diagramId) ? diagramId : null,
         skill: (["knowledge", "application", "analysis"].includes(skill)
           ? skill
           : "knowledge") as McqQuestion["skill"],

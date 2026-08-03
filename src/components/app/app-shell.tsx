@@ -9,6 +9,8 @@ import {
   PenLine,
   Target,
   Dumbbell,
+  LineChart,
+  Wand2,
 } from "lucide-react";
 import type { ReactNode } from "react";
 
@@ -21,6 +23,8 @@ const NAV = [
   { to: "/grade", label: "Essay marking", icon: PenLine, staffOnly: false },
   { to: "/practice", label: "AO skills coach", icon: Dumbbell, staffOnly: false },
   { to: "/mcq", label: "MCQ papers", icon: ListChecks, staffOnly: false },
+  { to: "/diagrams", label: "Diagram library", icon: LineChart, staffOnly: false },
+  { to: "/essay-generator", label: "Essay generator", icon: Wand2, staffOnly: false },
   { to: "/knowledge", label: "Knowledge base", icon: BookOpen, staffOnly: true },
   { to: "/calibration", label: "Calibration", icon: Target, staffOnly: true },
 ] as const;

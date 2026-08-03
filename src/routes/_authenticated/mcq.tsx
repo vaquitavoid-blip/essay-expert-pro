@@ -6,12 +6,14 @@ import { useState } from "react";
 import { toast } from "sonner";
 
 import { PageHeader } from "@/components/app/app-shell";
+import { EconomicsDiagram } from "@/components/diagrams/economics-diagram";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { getDiagram } from "@/lib/diagrams/catalog";
 import { cn } from "@/lib/utils";
 import {
   createMcqPaper,
@@ -264,6 +266,7 @@ function McqPage() {
                   </span>
                   <div className="min-w-0 flex-1">
                     <p className="text-sm whitespace-pre-line">{question.stem}</p>
+                    <McqDiagram id={question.diagramId} />
                     <div className="mt-3 space-y-1.5">
                       {LETTERS.map((letter) => {
                         const selected = answers[String(question.number)] === letter;
@@ -346,5 +349,19 @@ function McqPage() {
         </div>
       </div>
     </>
+  );
+}
+
+/** Renders the library diagram a generated question refers to, if any. */
+function McqDiagram({ id }: { id?: string | null }) {
+  const entry = getDiagram(id);
+  if (!entry) return null;
+  return (
+    <figure className="mt-3 rounded-lg border border-border bg-card p-3">
+      <EconomicsDiagram spec={entry.spec} title={entry.title} className="mx-auto max-w-md" />
+      <figcaption className="mt-1 text-center text-xs text-muted-foreground">
+        {entry.title}
+      </figcaption>
+    </figure>
   );
 }
