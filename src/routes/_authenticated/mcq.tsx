@@ -349,3 +349,17 @@ function McqPage() {
     </>
   );
 }
+
+/** Renders the library diagram a generated question refers to, if any. */
+function McqDiagram({ id }: { id?: string | null }) {
+  const entry = getDiagram(id);
+  if (!entry) return null;
+  return (
+    <figure className="mt-3 rounded-lg border border-border bg-card p-3">
+      <EconomicsDiagram spec={entry.spec} title={entry.title} className="mx-auto max-w-md" />
+      <figcaption className="mt-1 text-center text-xs text-muted-foreground">
+        {entry.title}
+      </figcaption>
+    </figure>
+  );
+}
