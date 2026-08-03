@@ -116,11 +116,11 @@ export function EconomicsDiagram({
         markerEnd={`url(#arrow-${uid})`}
       />
       <text
-        x={px(0) - 8}
-        y={T + 6}
+        x={4}
+        y={T - 4}
         fontSize="12"
         fontWeight="600"
-        textAnchor="end"
+        textAnchor="start"
         fill="var(--foreground)"
       >
         {spec.yLabel}
