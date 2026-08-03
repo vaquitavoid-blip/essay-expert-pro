@@ -6,12 +6,14 @@ import { useState } from "react";
 import { toast } from "sonner";
 
 import { PageHeader } from "@/components/app/app-shell";
+import { EconomicsDiagram } from "@/components/diagrams/economics-diagram";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { getDiagram } from "@/lib/diagrams/catalog";
 import { cn } from "@/lib/utils";
 import {
   createMcqPaper,
