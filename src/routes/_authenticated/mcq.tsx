@@ -264,6 +264,7 @@ function McqPage() {
                   </span>
                   <div className="min-w-0 flex-1">
                     <p className="text-sm whitespace-pre-line">{question.stem}</p>
+                    <McqDiagram id={question.diagramId} />
                     <div className="mt-3 space-y-1.5">
                       {LETTERS.map((letter) => {
                         const selected = answers[String(question.number)] === letter;
