@@ -3,6 +3,9 @@
 
 const GATEWAY = "https://ai.gateway.lovable.dev/v1";
 
+import type { ProviderConfig } from "./ai/active.server";
+import { getActiveProvider } from "./ai/active.server";
+
 export class AiGatewayError extends Error {
   constructor(
     message: string,
@@ -22,7 +25,10 @@ function apiKey(): string {
 /** Maps gateway failures onto messages that are safe and useful in the UI. */
 function explain(status: number, body: string): string {
   if (status === 429) return "The AI is rate limited right now. Please try again in a moment.";
-  if (status === 402) return "AI credits have run out. Add credits to continue using AI features.";
+  if (status === 402)
+    return "AI credits have run out. An admin can add credits, or plug in their own provider key (Claude, Gemini, Grok, OpenAI…) under Admin → AI providers.";
+  if (status === 401)
+    return "The configured AI provider rejected the API key. An admin can update it under Admin → AI providers.";
   if (status === 403) return "AI access is disabled for this workspace.";
   return `The AI request failed (${status}). ${body.slice(0, 300)}`;
 }
@@ -37,6 +43,8 @@ export type ChatOptions = {
   maxCompletionTokens?: number;
   /** GPT-5 family: must be sent explicitly, and "none" keeps marking fast. */
   reasoningEffort?: "none" | "low" | "medium" | "high";
+  /** Bypass the stored override (used by the admin "test key" action). */
+  overrideProvider?: ProviderConfig | null;
 };
 
 export type ChatResult = {
@@ -49,6 +57,14 @@ export type ChatResult = {
 
 export async function chat(options: ChatOptions): Promise<ChatResult> {
   const started = Date.now();
+  const override =
+    options.overrideProvider !== undefined ? options.overrideProvider : await getActiveProvider();
+
+  if (override) {
+    const result = await chatViaProvider(override, options);
+    return { ...result, latencyMs: Date.now() - started };
+  }
+
   const body: Record<string, unknown> = {
     model: options.model,
     messages: options.messages,
@@ -86,6 +102,91 @@ export async function chat(options: ChatOptions): Promise<ChatResult> {
     promptTokens: data.usage?.prompt_tokens ?? null,
     completionTokens: data.usage?.completion_tokens ?? null,
     latencyMs: Date.now() - started,
+  };
+}
+
+/**
+ * Bring-your-own-key path. Anthropic has its own request shape; every other
+ * supported provider accepts the OpenAI chat-completions body.
+ */
+async function chatViaProvider(
+  config: ProviderConfig,
+  options: ChatOptions,
+): Promise<Omit<ChatResult, "latencyMs">> {
+  if (config.provider === "anthropic") {
+    const system = options.messages
+      .filter((m) => m.role === "system")
+      .map((m) => m.content)
+      .join("\n\n");
+    const response = await fetch(`${config.baseUrl}/messages`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": config.apiKey,
+        "anthropic-version": "2023-06-01",
+      },
+      body: JSON.stringify({
+        model: config.model,
+        max_tokens: options.maxCompletionTokens ?? 8000,
+        ...(system ? { system } : {}),
+        ...(typeof options.temperature === "number" ? { temperature: options.temperature } : {}),
+        messages: options.messages
+          .filter((m) => m.role !== "system")
+          .map((m) => ({ role: m.role, content: m.content })),
+      }),
+    });
+
+    if (!response.ok) {
+      throw new AiGatewayError(explain(response.status, await response.text()), response.status);
+    }
+
+    const data = (await response.json()) as {
+      content?: { type: string; text?: string }[];
+      usage?: { input_tokens?: number; output_tokens?: number };
+    };
+    return {
+      text: (data.content ?? [])
+        .filter((part) => part.type === "text")
+        .map((part) => part.text ?? "")
+        .join(""),
+      model: config.model,
+      promptTokens: data.usage?.input_tokens ?? null,
+      completionTokens: data.usage?.output_tokens ?? null,
+    };
+  }
+
+  const body: Record<string, unknown> = {
+    model: config.model,
+    messages: options.messages,
+  };
+  if (typeof options.temperature === "number" && !/^gpt-5/.test(config.model)) {
+    body.temperature = options.temperature;
+  }
+  if (options.json) body.response_format = { type: "json_object" };
+  if (options.maxCompletionTokens) body.max_completion_tokens = options.maxCompletionTokens;
+
+  const response = await fetch(`${config.baseUrl}/chat/completions`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${config.apiKey}`,
+    },
+    body: JSON.stringify(body),
+  });
+
+  if (!response.ok) {
+    throw new AiGatewayError(explain(response.status, await response.text()), response.status);
+  }
+
+  const data = (await response.json()) as {
+    choices?: { message?: { content?: string } }[];
+    usage?: { prompt_tokens?: number; completion_tokens?: number };
+  };
+  return {
+    text: data.choices?.[0]?.message?.content ?? "",
+    model: config.model,
+    promptTokens: data.usage?.prompt_tokens ?? null,
+    completionTokens: data.usage?.completion_tokens ?? null,
   };
 }
 
