@@ -11,6 +11,7 @@ import {
   Dumbbell,
   LineChart,
   Wand2,
+  ShieldCheck,
 } from "lucide-react";
 import type { ReactNode } from "react";
 
@@ -18,7 +19,13 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 
-const NAV = [
+const NAV: {
+  to: string;
+  label: string;
+  icon: typeof LayoutDashboard;
+  staffOnly: boolean;
+  adminOnly?: boolean;
+}[] = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard, staffOnly: false },
   { to: "/grade", label: "Essay marking", icon: PenLine, staffOnly: false },
   { to: "/practice", label: "AO skills coach", icon: Dumbbell, staffOnly: false },
@@ -27,7 +34,14 @@ const NAV = [
   { to: "/essay-generator", label: "Essay generator", icon: Wand2, staffOnly: false },
   { to: "/knowledge", label: "Knowledge base", icon: BookOpen, staffOnly: true },
   { to: "/calibration", label: "Calibration", icon: Target, staffOnly: true },
-] as const;
+  { to: "/admin", label: "Admin console", icon: ShieldCheck, staffOnly: true, adminOnly: true },
+];
+
+function visibleNav(role: "student" | "teacher" | "admin") {
+  return NAV.filter(
+    (item) => (!item.staffOnly || role !== "student") && (!item.adminOnly || role === "admin"),
+  );
+}
 
 export function AppShell({
   children,
@@ -65,7 +79,7 @@ export function AppShell({
         </Link>
 
         <nav className="flex flex-1 flex-col gap-0.5">
-          {NAV.filter((item) => !item.staffOnly || role !== "student").map((item) => {
+          {visibleNav(role).map((item) => {
             const active = pathname.startsWith(item.to);
             return (
               <Link
@@ -95,7 +109,7 @@ export function AppShell({
 
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="flex items-center gap-1 overflow-x-auto border-b border-border px-3 py-2 md:hidden">
-          {NAV.filter((item) => !item.staffOnly || role !== "student").map((item) => (
+          {visibleNav(role).map((item) => (
             <Link
               key={item.to}
               to={item.to}
