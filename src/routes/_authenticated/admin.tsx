@@ -524,3 +524,271 @@ function UsersPanel() {
     </div>
   );
 }
+/* ------------------------------------------------------------------ */
+/* Diagrams — admins add their own Cambridge diagrams to the library    */
+/* ------------------------------------------------------------------ */
+
+function DiagramsPanel() {
+  const queryClient = useQueryClient();
+  const list = useServerFn(listCustomDiagrams);
+  const save = useServerFn(saveCustomDiagram);
+  const remove = useServerFn(deleteCustomDiagram);
+
+  const diagrams = useQuery({ queryKey: ["custom-diagrams"], queryFn: () => list() });
+
+  const [title, setTitle] = useState("");
+  const [section, setSection] = useState<"Microeconomics" | "Macroeconomics">("Microeconomics");
+  const [topic, setTopic] = useState("Added by your school");
+  const [level, setLevel] = useState<"AS" | "A Level" | "AS & A Level">("AS & A Level");
+  const [templateId, setTemplateId] = useState(SPEC_TEMPLATES[0]?.id ?? "");
+  const [represents, setRepresents] = useState("");
+  const [whyUsed, setWhyUsed] = useState("");
+  const [whenToDraw, setWhenToDraw] = useState("");
+  const [howToRead, setHowToRead] = useState("");
+  const [labels, setLabels] = useState("");
+  const [mistakes, setMistakes] = useState("");
+  const [tips, setTips] = useState("");
+  const [specJson, setSpecJson] = useState("");
+
+  const templatePreview = templateSpec(templateId);
+  const parsedSpec = (() => {
+    if (!specJson.trim()) return { spec: templatePreview, error: null as string | null };
+    try {
+      return { spec: JSON.parse(specJson), error: null as string | null };
+    } catch {
+      return { spec: null, error: "That geometry JSON is not valid." };
+    }
+  })();
+
+  const toLines = (value: string) =>
+    value
+      .split("\n")
+      .map((line) => line.trim())
+      .filter(Boolean);
+
+  const saveMutation = useMutation({
+    mutationFn: () =>
+      save({
+        data: {
+          title,
+          section,
+          topic,
+          level,
+          represents,
+          whyUsed,
+          whenToDraw,
+          howToRead: toLines(howToRead),
+          labels: toLines(labels).map((line) => {
+            const [symbol, ...rest] = line.split("=");
+            return { symbol: (symbol ?? "").trim(), meaning: rest.join("=").trim() };
+          }),
+          mistakes: toLines(mistakes),
+          tips: toLines(tips),
+          realWorld: [],
+          related: [],
+          examQuestions: [],
+          spec: parsedSpec.spec as Record<string, unknown>,
+        },
+      }),
+    onSuccess: async () => {
+      toast.success("Diagram added to the library.");
+      setTitle("");
+      setRepresents("");
+      setWhyUsed("");
+      setWhenToDraw("");
+      setHowToRead("");
+      setLabels("");
+      setMistakes("");
+      setTips("");
+      setSpecJson("");
+      await queryClient.invalidateQueries({ queryKey: ["custom-diagrams"] });
+    },
+    onError: (error: Error) => toast.error(error.message),
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => remove({ data: { id } }),
+    onSuccess: async () => {
+      toast.success("Diagram removed.");
+      await queryClient.invalidateQueries({ queryKey: ["custom-diagrams"] });
+    },
+    onError: (error: Error) => toast.error(error.message),
+  });
+
+  return (
+    <div className="grid gap-5 lg:grid-cols-[440px_1fr]">
+      <section className="panel space-y-3 rounded-xl border border-border p-5">
+        <h2 className="text-sm font-semibold">Add a diagram</h2>
+        <p className="text-xs text-muted-foreground">
+          Start from an exam-convention template, then rewrite the geometry if you need something
+          different. New diagrams appear in the diagram library for every student.
+        </p>
+
+        <div className="space-y-1.5">
+          <Label>Title</Label>
+          <Input
+            value={title}
+            onChange={(event) => setTitle(event.target.value)}
+            placeholder="Minimum wage in a labour market"
+          />
+        </div>
+
+        <div className="grid gap-3 sm:grid-cols-2">
+          <div className="space-y-1.5">
+            <Label>Section</Label>
+            <Select value={section} onValueChange={(value) => setSection(value as never)}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Microeconomics">Microeconomics</SelectItem>
+                <SelectItem value="Macroeconomics">Macroeconomics</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-1.5">
+            <Label>Level</Label>
+            <Select value={level} onValueChange={(value) => setLevel(value as never)}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="AS">AS</SelectItem>
+                <SelectItem value="A Level">A Level</SelectItem>
+                <SelectItem value="AS &amp; A Level">AS &amp; A Level</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        <div className="space-y-1.5">
+          <Label>Topic group</Label>
+          <Input value={topic} onChange={(event) => setTopic(event.target.value)} />
+        </div>
+
+        <div className="space-y-1.5">
+          <Label>Geometry template</Label>
+          <Select value={templateId} onValueChange={setTemplateId}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent className="max-h-72">
+              {SPEC_TEMPLATES.map((item) => (
+                <SelectItem key={item.id} value={item.id}>
+                  {item.title}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="space-y-1.5">
+          <Label>
+            What it represents <span className="text-muted-foreground">(one paragraph)</span>
+          </Label>
+          <Textarea rows={2} value={represents} onChange={(e) => setRepresents(e.target.value)} />
+        </div>
+        <div className="space-y-1.5">
+          <Label>Why Cambridge uses it</Label>
+          <Textarea rows={2} value={whyUsed} onChange={(e) => setWhyUsed(e.target.value)} />
+        </div>
+        <div className="space-y-1.5">
+          <Label>When to draw it</Label>
+          <Textarea rows={2} value={whenToDraw} onChange={(e) => setWhenToDraw(e.target.value)} />
+        </div>
+        <div className="space-y-1.5">
+          <Label>
+            How to read it <span className="text-muted-foreground">(one step per line)</span>
+          </Label>
+          <Textarea rows={3} value={howToRead} onChange={(e) => setHowToRead(e.target.value)} />
+        </div>
+        <div className="space-y-1.5">
+          <Label>
+            Labels <span className="text-muted-foreground">(one per line, e.g. P = price)</span>
+          </Label>
+          <Textarea rows={3} value={labels} onChange={(e) => setLabels(e.target.value)} />
+        </div>
+        <div className="space-y-1.5">
+          <Label>
+            Common mistakes <span className="text-muted-foreground">(one per line)</span>
+          </Label>
+          <Textarea rows={2} value={mistakes} onChange={(e) => setMistakes(e.target.value)} />
+        </div>
+        <div className="space-y-1.5">
+          <Label>
+            Examiner tips <span className="text-muted-foreground">(one per line)</span>
+          </Label>
+          <Textarea rows={2} value={tips} onChange={(e) => setTips(e.target.value)} />
+        </div>
+        <div className="space-y-1.5">
+          <Label>
+            Geometry JSON <span className="text-muted-foreground">(optional override)</span>
+          </Label>
+          <Textarea
+            rows={4}
+            className="font-mono text-[12px]"
+            value={specJson}
+            onChange={(event) => setSpecJson(event.target.value)}
+            placeholder={JSON.stringify(templatePreview ?? {}).slice(0, 120)}
+          />
+          {parsedSpec.error ? (
+            <p className="text-xs text-destructive">{parsedSpec.error}</p>
+          ) : null}
+        </div>
+
+        <Button
+          className="w-full"
+          onClick={() => saveMutation.mutate()}
+          disabled={saveMutation.isPending || title.trim().length < 3 || !parsedSpec.spec}
+        >
+          {saveMutation.isPending ? <Loader2 className="size-4 animate-spin" /> : null}
+          Add to diagram library
+        </Button>
+      </section>
+
+      <section className="space-y-3">
+        <div className="panel rounded-xl border border-border p-4">
+          <p className="text-sm font-semibold">Preview</p>
+          {parsedSpec.spec ? (
+            <div className="mt-3">
+              <EconomicsDiagram spec={parsedSpec.spec as never} title={title || "Untitled diagram"} />
+            </div>
+          ) : (
+            <p className="mt-2 text-xs text-muted-foreground">Fix the geometry JSON to preview.</p>
+          )}
+        </div>
+
+        {diagrams.isLoading ? <Skeleton className="h-24 w-full" /> : null}
+
+        {(diagrams.data ?? []).map((row) => (
+          <div
+            key={row.id}
+            className="panel flex flex-wrap items-center gap-3 rounded-xl border border-border p-4"
+          >
+            <div className="min-w-0">
+              <p className="truncate text-sm font-medium">{row.title}</p>
+              <p className="text-xs text-muted-foreground">
+                {row.section} · {row.topic} · {row.level}
+              </p>
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="ml-auto"
+              onClick={() => deleteMutation.mutate(row.id)}
+              aria-label={`Delete ${row.title}`}
+            >
+              <Trash2 className="size-4" />
+            </Button>
+          </div>
+        ))}
+
+        {diagrams.data && diagrams.data.length === 0 ? (
+          <p className="text-sm text-muted-foreground">
+            No custom diagrams yet — the library still shows all built-in Cambridge diagrams.
+          </p>
+        ) : null}
+      </section>
+    </div>
+  );
+}
