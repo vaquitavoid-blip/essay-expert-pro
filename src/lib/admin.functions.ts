@@ -272,18 +272,6 @@ export const rotateProviderKey = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
-const _unusedDeleteProviderKey = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => z.object({ id: z.string().uuid() }).parse(input))
-  .handler(async ({ data, context }) => {
-    await assertAdmin(context);
-    const { error } = await context.supabase.from("ai_provider_keys").delete().eq("id", data.id);
-    if (error) throw new Error(error.message);
-    const { clearActiveProviderCache } = await import("./ai/active.server");
-    clearActiveProviderCache();
-    return { ok: true };
-  });
-
 /** Sends a one-line prompt through a stored key so admins can verify it works. */
 export const testProviderKey = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
