@@ -1,7 +1,16 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { CheckCircle2, KeyRound, Loader2, Plug, ShieldCheck, Trash2, XCircle } from "lucide-react";
+import {
+  CheckCircle2,
+  KeyRound,
+  Loader2,
+  Plug,
+  RefreshCw,
+  ShieldCheck,
+  Trash2,
+  XCircle,
+} from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -19,6 +28,7 @@ import {
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
+import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   activateProviderKey,
@@ -27,12 +37,20 @@ import {
   deleteProviderKey,
   listProviderKeys,
   listUsers,
+  rotateProviderKey,
   saveProviderKey,
   setUserRole,
   testProviderKey,
 } from "@/lib/admin.functions";
 import { getMe } from "@/lib/account.functions";
 import { AI_PROVIDERS, providerMeta } from "@/lib/ai/providers";
+import {
+  deleteCustomDiagram,
+  listCustomDiagrams,
+  saveCustomDiagram,
+} from "@/lib/diagrams.functions";
+import { SPEC_TEMPLATES, templateSpec } from "@/lib/diagrams/custom";
+import { EconomicsDiagram } from "@/components/diagrams/economics-diagram";
 
 export const Route = createFileRoute("/_authenticated/admin")({
   head: () => ({
@@ -115,12 +133,16 @@ function AdminPage() {
         <Tabs defaultValue="providers">
           <TabsList>
             <TabsTrigger value="providers">AI providers</TabsTrigger>
+            <TabsTrigger value="diagrams">Diagrams</TabsTrigger>
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="users">Users</TabsTrigger>
           </TabsList>
 
           <TabsContent value="providers" className="mt-5">
             <ProvidersPanel />
+          </TabsContent>
+          <TabsContent value="diagrams" className="mt-5">
+            <DiagramsPanel />
           </TabsContent>
           <TabsContent value="overview" className="mt-5">
             <OverviewPanel />
