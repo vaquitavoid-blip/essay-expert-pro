@@ -230,7 +230,7 @@ function DiagramDetail({
         <Section title="Related diagrams">
           <div className="flex flex-wrap gap-2">
             {entry.related.map((id) => {
-              const related = DIAGRAMS.find((item) => item.id === id);
+              const related = BUILT_IN.find((item) => item.id === id);
               if (!related) return null;
               return (
                 <button
