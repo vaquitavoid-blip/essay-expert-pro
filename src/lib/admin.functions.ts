@@ -246,6 +246,32 @@ export const deleteProviderKey = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+/**
+ * Replace the secret on an existing key in place — the provider, model and
+ * active state are kept, so rotating a leaked key never interrupts marking.
+ */
+export const rotateProviderKey = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
+    z
+      .object({
+        id: z.string().uuid(),
+        apiKey: z.string().trim().min(8, "Paste the new API key.").max(400),
+      })
+      .parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context);
+    const { error } = await context.supabase
+      .from("ai_provider_keys")
+      .update({ api_key: data.apiKey, updated_at: new Date().toISOString() })
+      .eq("id", data.id);
+    if (error) throw new Error(error.message);
+    const { clearActiveProviderCache } = await import("./ai/active.server");
+    clearActiveProviderCache();
+    return { ok: true };
+  });
+
 /** Sends a one-line prompt through a stored key so admins can verify it works. */
 export const testProviderKey = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])

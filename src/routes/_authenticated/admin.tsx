@@ -1,7 +1,16 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { CheckCircle2, KeyRound, Loader2, Plug, ShieldCheck, Trash2, XCircle } from "lucide-react";
+import {
+  CheckCircle2,
+  KeyRound,
+  Loader2,
+  Plug,
+  RefreshCw,
+  ShieldCheck,
+  Trash2,
+  XCircle,
+} from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -19,6 +28,7 @@ import {
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
+import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   activateProviderKey,
@@ -27,12 +37,20 @@ import {
   deleteProviderKey,
   listProviderKeys,
   listUsers,
+  rotateProviderKey,
   saveProviderKey,
   setUserRole,
   testProviderKey,
 } from "@/lib/admin.functions";
 import { getMe } from "@/lib/account.functions";
 import { AI_PROVIDERS, providerMeta } from "@/lib/ai/providers";
+import {
+  deleteCustomDiagram,
+  listCustomDiagrams,
+  saveCustomDiagram,
+} from "@/lib/diagrams.functions";
+import { SPEC_TEMPLATES, templateSpec } from "@/lib/diagrams/custom";
+import { EconomicsDiagram } from "@/components/diagrams/economics-diagram";
 
 export const Route = createFileRoute("/_authenticated/admin")({
   head: () => ({
@@ -115,12 +133,16 @@ function AdminPage() {
         <Tabs defaultValue="providers">
           <TabsList>
             <TabsTrigger value="providers">AI providers</TabsTrigger>
+            <TabsTrigger value="diagrams">Diagrams</TabsTrigger>
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="users">Users</TabsTrigger>
           </TabsList>
 
           <TabsContent value="providers" className="mt-5">
             <ProvidersPanel />
+          </TabsContent>
+          <TabsContent value="diagrams" className="mt-5">
+            <DiagramsPanel />
           </TabsContent>
           <TabsContent value="overview" className="mt-5">
             <OverviewPanel />
@@ -141,6 +163,7 @@ function ProvidersPanel() {
   const activate = useServerFn(activateProviderKey);
   const remove = useServerFn(deleteProviderKey);
   const test = useServerFn(testProviderKey);
+  const rotate = useServerFn(rotateProviderKey);
 
   const keys = useQuery({ queryKey: ["provider-keys"], queryFn: () => list() });
 
@@ -150,6 +173,8 @@ function ProvidersPanel() {
   const [model, setModel] = useState("");
   const [baseUrl, setBaseUrl] = useState("");
   const [activateNow, setActivateNow] = useState(true);
+  const [rotatingId, setRotatingId] = useState<string | null>(null);
+  const [rotateValue, setRotateValue] = useState("");
 
   const meta = providerMeta(provider);
   const refresh = () => queryClient.invalidateQueries({ queryKey: ["provider-keys"] });
@@ -199,6 +224,17 @@ function ProvidersPanel() {
       result.ok
         ? toast.success(`Key works — ${result.model} replied "${result.reply}"`)
         : toast.error(result.reply),
+    onError: (error: Error) => toast.error(error.message),
+  });
+
+  const rotateMutation = useMutation({
+    mutationFn: (input: { id: string; apiKey: string }) => rotate({ data: input }),
+    onSuccess: async () => {
+      toast.success("Key rotated. The old secret no longer works here.");
+      setRotatingId(null);
+      setRotateValue("");
+      await refresh();
+    },
     onError: (error: Error) => toast.error(error.message),
   });
 
@@ -367,6 +403,16 @@ function ProvidersPanel() {
                   </Button>
                 )}
                 <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setRotateValue("");
+                    setRotatingId(rotatingId === row.id ? null : row.id);
+                  }}
+                >
+                  <RefreshCw className="size-4" /> Rotate
+                </Button>
+                <Button
                   variant="ghost"
                   size="sm"
                   onClick={() => deleteMutation.mutate(row.id)}
@@ -376,6 +422,31 @@ function ProvidersPanel() {
                 </Button>
               </div>
             </div>
+            {rotatingId === row.id ? (
+              <div className="mt-3 space-y-2 rounded-lg border border-border p-3">
+                <Label htmlFor={`rotate-${row.id}`}>New API key</Label>
+                <div className="flex flex-wrap gap-2">
+                  <Input
+                    id={`rotate-${row.id}`}
+                    type="password"
+                    className="min-w-48 flex-1"
+                    value={rotateValue}
+                    onChange={(event) => setRotateValue(event.target.value)}
+                    placeholder={providerMeta(row.provider).keyHint}
+                  />
+                  <Button
+                    onClick={() => rotateMutation.mutate({ id: row.id, apiKey: rotateValue })}
+                    disabled={rotateMutation.isPending || rotateValue.trim().length < 8}
+                  >
+                    {rotateMutation.isPending ? <Loader2 className="size-4 animate-spin" /> : null}
+                    Save new key
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Provider, model and active state stay the same — only the secret changes.
+                </p>
+              </div>
+            ) : null}
           </div>
         ))}
 
@@ -499,6 +570,274 @@ function UsersPanel() {
       {users.data && users.data.length === 0 ? (
         <p className="px-4 py-4 text-sm text-muted-foreground">No accounts yet.</p>
       ) : null}
+    </div>
+  );
+}
+/* ------------------------------------------------------------------ */
+/* Diagrams — admins add their own Cambridge diagrams to the library    */
+/* ------------------------------------------------------------------ */
+
+function DiagramsPanel() {
+  const queryClient = useQueryClient();
+  const list = useServerFn(listCustomDiagrams);
+  const save = useServerFn(saveCustomDiagram);
+  const remove = useServerFn(deleteCustomDiagram);
+
+  const diagrams = useQuery({ queryKey: ["custom-diagrams"], queryFn: () => list() });
+
+  const [title, setTitle] = useState("");
+  const [section, setSection] = useState<"Microeconomics" | "Macroeconomics">("Microeconomics");
+  const [topic, setTopic] = useState("Added by your school");
+  const [level, setLevel] = useState<"AS" | "A Level" | "AS & A Level">("AS & A Level");
+  const [templateId, setTemplateId] = useState(SPEC_TEMPLATES[0]?.id ?? "");
+  const [represents, setRepresents] = useState("");
+  const [whyUsed, setWhyUsed] = useState("");
+  const [whenToDraw, setWhenToDraw] = useState("");
+  const [howToRead, setHowToRead] = useState("");
+  const [labels, setLabels] = useState("");
+  const [mistakes, setMistakes] = useState("");
+  const [tips, setTips] = useState("");
+  const [specJson, setSpecJson] = useState("");
+
+  const templatePreview = templateSpec(templateId);
+  const parsedSpec = (() => {
+    if (!specJson.trim()) return { spec: templatePreview, error: null as string | null };
+    try {
+      return { spec: JSON.parse(specJson), error: null as string | null };
+    } catch {
+      return { spec: null, error: "That geometry JSON is not valid." };
+    }
+  })();
+
+  const toLines = (value: string) =>
+    value
+      .split("\n")
+      .map((line) => line.trim())
+      .filter(Boolean);
+
+  const saveMutation = useMutation({
+    mutationFn: () =>
+      save({
+        data: {
+          title,
+          section,
+          topic,
+          level,
+          represents,
+          whyUsed,
+          whenToDraw,
+          howToRead: toLines(howToRead),
+          labels: toLines(labels).map((line) => {
+            const [symbol, ...rest] = line.split("=");
+            return { symbol: (symbol ?? "").trim(), meaning: rest.join("=").trim() };
+          }),
+          mistakes: toLines(mistakes),
+          tips: toLines(tips),
+          realWorld: [],
+          related: [],
+          examQuestions: [],
+          spec: parsedSpec.spec as Record<string, unknown>,
+        },
+      }),
+    onSuccess: async () => {
+      toast.success("Diagram added to the library.");
+      setTitle("");
+      setRepresents("");
+      setWhyUsed("");
+      setWhenToDraw("");
+      setHowToRead("");
+      setLabels("");
+      setMistakes("");
+      setTips("");
+      setSpecJson("");
+      await queryClient.invalidateQueries({ queryKey: ["custom-diagrams"] });
+    },
+    onError: (error: Error) => toast.error(error.message),
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => remove({ data: { id } }),
+    onSuccess: async () => {
+      toast.success("Diagram removed.");
+      await queryClient.invalidateQueries({ queryKey: ["custom-diagrams"] });
+    },
+    onError: (error: Error) => toast.error(error.message),
+  });
+
+  return (
+    <div className="grid gap-5 lg:grid-cols-[440px_1fr]">
+      <section className="panel space-y-3 rounded-xl border border-border p-5">
+        <h2 className="text-sm font-semibold">Add a diagram</h2>
+        <p className="text-xs text-muted-foreground">
+          Start from an exam-convention template, then rewrite the geometry if you need something
+          different. New diagrams appear in the diagram library for every student.
+        </p>
+
+        <div className="space-y-1.5">
+          <Label>Title</Label>
+          <Input
+            value={title}
+            onChange={(event) => setTitle(event.target.value)}
+            placeholder="Minimum wage in a labour market"
+          />
+        </div>
+
+        <div className="grid gap-3 sm:grid-cols-2">
+          <div className="space-y-1.5">
+            <Label>Section</Label>
+            <Select value={section} onValueChange={(value) => setSection(value as never)}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Microeconomics">Microeconomics</SelectItem>
+                <SelectItem value="Macroeconomics">Macroeconomics</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-1.5">
+            <Label>Level</Label>
+            <Select value={level} onValueChange={(value) => setLevel(value as never)}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="AS">AS</SelectItem>
+                <SelectItem value="A Level">A Level</SelectItem>
+                <SelectItem value="AS &amp; A Level">AS &amp; A Level</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        <div className="space-y-1.5">
+          <Label>Topic group</Label>
+          <Input value={topic} onChange={(event) => setTopic(event.target.value)} />
+        </div>
+
+        <div className="space-y-1.5">
+          <Label>Geometry template</Label>
+          <Select value={templateId} onValueChange={setTemplateId}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent className="max-h-72">
+              {SPEC_TEMPLATES.map((item) => (
+                <SelectItem key={item.id} value={item.id}>
+                  {item.title}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="space-y-1.5">
+          <Label>
+            What it represents <span className="text-muted-foreground">(one paragraph)</span>
+          </Label>
+          <Textarea rows={2} value={represents} onChange={(e) => setRepresents(e.target.value)} />
+        </div>
+        <div className="space-y-1.5">
+          <Label>Why Cambridge uses it</Label>
+          <Textarea rows={2} value={whyUsed} onChange={(e) => setWhyUsed(e.target.value)} />
+        </div>
+        <div className="space-y-1.5">
+          <Label>When to draw it</Label>
+          <Textarea rows={2} value={whenToDraw} onChange={(e) => setWhenToDraw(e.target.value)} />
+        </div>
+        <div className="space-y-1.5">
+          <Label>
+            How to read it <span className="text-muted-foreground">(one step per line)</span>
+          </Label>
+          <Textarea rows={3} value={howToRead} onChange={(e) => setHowToRead(e.target.value)} />
+        </div>
+        <div className="space-y-1.5">
+          <Label>
+            Labels <span className="text-muted-foreground">(one per line, e.g. P = price)</span>
+          </Label>
+          <Textarea rows={3} value={labels} onChange={(e) => setLabels(e.target.value)} />
+        </div>
+        <div className="space-y-1.5">
+          <Label>
+            Common mistakes <span className="text-muted-foreground">(one per line)</span>
+          </Label>
+          <Textarea rows={2} value={mistakes} onChange={(e) => setMistakes(e.target.value)} />
+        </div>
+        <div className="space-y-1.5">
+          <Label>
+            Examiner tips <span className="text-muted-foreground">(one per line)</span>
+          </Label>
+          <Textarea rows={2} value={tips} onChange={(e) => setTips(e.target.value)} />
+        </div>
+        <div className="space-y-1.5">
+          <Label>
+            Geometry JSON <span className="text-muted-foreground">(optional override)</span>
+          </Label>
+          <Textarea
+            rows={4}
+            className="font-mono text-[12px]"
+            value={specJson}
+            onChange={(event) => setSpecJson(event.target.value)}
+            placeholder={JSON.stringify(templatePreview ?? {}).slice(0, 120)}
+          />
+          {parsedSpec.error ? (
+            <p className="text-xs text-destructive">{parsedSpec.error}</p>
+          ) : null}
+        </div>
+
+        <Button
+          className="w-full"
+          onClick={() => saveMutation.mutate()}
+          disabled={saveMutation.isPending || title.trim().length < 3 || !parsedSpec.spec}
+        >
+          {saveMutation.isPending ? <Loader2 className="size-4 animate-spin" /> : null}
+          Add to diagram library
+        </Button>
+      </section>
+
+      <section className="space-y-3">
+        <div className="panel rounded-xl border border-border p-4">
+          <p className="text-sm font-semibold">Preview</p>
+          {parsedSpec.spec ? (
+            <div className="mt-3">
+              <EconomicsDiagram spec={parsedSpec.spec as never} title={title || "Untitled diagram"} />
+            </div>
+          ) : (
+            <p className="mt-2 text-xs text-muted-foreground">Fix the geometry JSON to preview.</p>
+          )}
+        </div>
+
+        {diagrams.isLoading ? <Skeleton className="h-24 w-full" /> : null}
+
+        {(diagrams.data ?? []).map((row) => (
+          <div
+            key={row.id}
+            className="panel flex flex-wrap items-center gap-3 rounded-xl border border-border p-4"
+          >
+            <div className="min-w-0">
+              <p className="truncate text-sm font-medium">{row.title}</p>
+              <p className="text-xs text-muted-foreground">
+                {row.section} · {row.topic} · {row.level}
+              </p>
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="ml-auto"
+              onClick={() => deleteMutation.mutate(row.id)}
+              aria-label={`Delete ${row.title}`}
+            >
+              <Trash2 className="size-4" />
+            </Button>
+          </div>
+        ))}
+
+        {diagrams.data && diagrams.data.length === 0 ? (
+          <p className="text-sm text-muted-foreground">
+            No custom diagrams yet — the library still shows all built-in Cambridge diagrams.
+          </p>
+        ) : null}
+      </section>
     </div>
   );
 }

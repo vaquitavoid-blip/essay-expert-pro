@@ -1,4 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { AlertTriangle, BookMarked, Globe2, Lightbulb, Search, Tags } from "lucide-react";
 import { useMemo, useState } from "react";
 
@@ -6,7 +8,9 @@ import { PageHeader } from "@/components/app/app-shell";
 import { EconomicsDiagram } from "@/components/diagrams/economics-diagram";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { DIAGRAMS, SECTIONS, topicsFor } from "@/lib/diagrams/catalog";
+import { DIAGRAMS as BUILT_IN, SECTIONS } from "@/lib/diagrams/catalog";
+import { toDiagramEntry } from "@/lib/diagrams/custom";
+import { listCustomDiagrams } from "@/lib/diagrams.functions";
 import type { DiagramEntry, DiagramSection } from "@/lib/diagrams/types";
 import { cn } from "@/lib/utils";
 
@@ -35,7 +39,24 @@ export const Route = createFileRoute("/_authenticated/diagrams")({
 function DiagramLibraryPage() {
   const [section, setSection] = useState<DiagramSection>("Microeconomics");
   const [query, setQuery] = useState("");
-  const [selectedId, setSelectedId] = useState<string>(DIAGRAMS[0]?.id ?? "");
+  const [selectedId, setSelectedId] = useState<string>(BUILT_IN[0]?.id ?? "");
+
+  const fetchCustom = useServerFn(listCustomDiagrams);
+  const custom = useQuery({ queryKey: ["custom-diagrams"], queryFn: () => fetchCustom() });
+
+  const DIAGRAMS = useMemo(
+    () => [...BUILT_IN, ...(custom.data ?? []).map(toDiagramEntry)],
+    [custom.data],
+  );
+
+  const topicOrder = (target: DiagramSection) => {
+    const seen: string[] = [];
+    for (const entry of DIAGRAMS) {
+      if (entry.section !== target) continue;
+      if (!seen.includes(entry.topic)) seen.push(entry.topic);
+    }
+    return seen;
+  };
 
   const list = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -48,7 +69,7 @@ function DiagramLibraryPage() {
         entry.represents.toLowerCase().includes(q)
       );
     });
-  }, [query, section]);
+  }, [DIAGRAMS, query, section]);
 
   const selected =
     DIAGRAMS.find((entry) => entry.id === selectedId) ?? list[0] ?? DIAGRAMS[0] ?? null;
@@ -56,11 +77,12 @@ function DiagramLibraryPage() {
   const groups = useMemo(() => {
     const order = query.trim()
       ? [...new Set(list.map((entry) => entry.topic))]
-      : topicsFor(section);
+      : topicOrder(section);
     return order
       .map((topic) => ({ topic, items: list.filter((entry) => entry.topic === topic) }))
       .filter((group) => group.items.length > 0);
-  }, [list, query, section]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [DIAGRAMS, list, query, section]);
 
   return (
     <>
@@ -208,7 +230,7 @@ function DiagramDetail({
         <Section title="Related diagrams">
           <div className="flex flex-wrap gap-2">
             {entry.related.map((id) => {
-              const related = DIAGRAMS.find((item) => item.id === id);
+              const related = BUILT_IN.find((item) => item.id === id);
               if (!related) return null;
               return (
                 <button
