@@ -163,6 +163,7 @@ function ProvidersPanel() {
   const activate = useServerFn(activateProviderKey);
   const remove = useServerFn(deleteProviderKey);
   const test = useServerFn(testProviderKey);
+  const rotate = useServerFn(rotateProviderKey);
 
   const keys = useQuery({ queryKey: ["provider-keys"], queryFn: () => list() });
 
@@ -172,6 +173,8 @@ function ProvidersPanel() {
   const [model, setModel] = useState("");
   const [baseUrl, setBaseUrl] = useState("");
   const [activateNow, setActivateNow] = useState(true);
+  const [rotatingId, setRotatingId] = useState<string | null>(null);
+  const [rotateValue, setRotateValue] = useState("");
 
   const meta = providerMeta(provider);
   const refresh = () => queryClient.invalidateQueries({ queryKey: ["provider-keys"] });
@@ -221,6 +224,17 @@ function ProvidersPanel() {
       result.ok
         ? toast.success(`Key works — ${result.model} replied "${result.reply}"`)
         : toast.error(result.reply),
+    onError: (error: Error) => toast.error(error.message),
+  });
+
+  const rotateMutation = useMutation({
+    mutationFn: (input: { id: string; apiKey: string }) => rotate({ data: input }),
+    onSuccess: async () => {
+      toast.success("Key rotated. The old secret no longer works here.");
+      setRotatingId(null);
+      setRotateValue("");
+      await refresh();
+    },
     onError: (error: Error) => toast.error(error.message),
   });
 
@@ -389,6 +403,16 @@ function ProvidersPanel() {
                   </Button>
                 )}
                 <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setRotateValue("");
+                    setRotatingId(rotatingId === row.id ? null : row.id);
+                  }}
+                >
+                  <RefreshCw className="size-4" /> Rotate
+                </Button>
+                <Button
                   variant="ghost"
                   size="sm"
                   onClick={() => deleteMutation.mutate(row.id)}
@@ -398,6 +422,31 @@ function ProvidersPanel() {
                 </Button>
               </div>
             </div>
+            {rotatingId === row.id ? (
+              <div className="mt-3 space-y-2 rounded-lg border border-border p-3">
+                <Label htmlFor={`rotate-${row.id}`}>New API key</Label>
+                <div className="flex flex-wrap gap-2">
+                  <Input
+                    id={`rotate-${row.id}`}
+                    type="password"
+                    className="min-w-48 flex-1"
+                    value={rotateValue}
+                    onChange={(event) => setRotateValue(event.target.value)}
+                    placeholder={providerMeta(row.provider).keyHint}
+                  />
+                  <Button
+                    onClick={() => rotateMutation.mutate({ id: row.id, apiKey: rotateValue })}
+                    disabled={rotateMutation.isPending || rotateValue.trim().length < 8}
+                  >
+                    {rotateMutation.isPending ? <Loader2 className="size-4 animate-spin" /> : null}
+                    Save new key
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Provider, model and active state stay the same — only the secret changes.
+                </p>
+              </div>
+            ) : null}
           </div>
         ))}
 
