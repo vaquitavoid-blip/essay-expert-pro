@@ -131,6 +131,75 @@ export type Database = {
         }
         Relationships: []
       }
+      custom_diagrams: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          exam_questions: string[]
+          how_to_read: string[]
+          id: string
+          labels: Json
+          level: string
+          mistakes: string[]
+          real_world: string[]
+          related: string[]
+          represents: string
+          section: string
+          slug: string
+          spec: Json
+          tips: string[]
+          title: string
+          topic: string
+          updated_at: string
+          when_to_draw: string
+          why_used: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          exam_questions?: string[]
+          how_to_read?: string[]
+          id?: string
+          labels?: Json
+          level?: string
+          mistakes?: string[]
+          real_world?: string[]
+          related?: string[]
+          represents?: string
+          section?: string
+          slug: string
+          spec?: Json
+          tips?: string[]
+          title: string
+          topic?: string
+          updated_at?: string
+          when_to_draw?: string
+          why_used?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          exam_questions?: string[]
+          how_to_read?: string[]
+          id?: string
+          labels?: Json
+          level?: string
+          mistakes?: string[]
+          real_world?: string[]
+          related?: string[]
+          represents?: string
+          section?: string
+          slug?: string
+          spec?: Json
+          tips?: string[]
+          title?: string
+          topic?: string
+          updated_at?: string
+          when_to_draw?: string
+          why_used?: string
+        }
+        Relationships: []
+      }
       document_chunks: {
         Row: {
           chunk_index: number
