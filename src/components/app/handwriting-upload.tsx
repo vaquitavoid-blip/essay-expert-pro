@@ -35,8 +35,12 @@ export function HandwritingUpload({
     },
     onSuccess: (result) => {
       onText(result.text);
+      for (const page of result.failedPages ?? []) {
+        toast.error(`Page ${page} could not be read.`);
+      }
+      const read = result.pages - (result.failedPages?.length ?? 0);
       toast.success(
-        `Transcribed ${result.pages} page${result.pages === 1 ? "" : "s"} — check it before marking.`,
+        `Transcribed ${read} page${read === 1 ? "" : "s"} — review transcription before grading.`,
       );
     },
     onError: (error: Error) => toast.error(error.message),
@@ -49,7 +53,7 @@ export function HandwritingUpload({
         <div>
           <p className="text-xs font-medium">Handwritten answer</p>
           <p className="text-[11px] text-muted-foreground">
-            Photo or PDF scan, up to 12 pages. Messy handwriting is fine.
+            JPG, JPEG, PNG or PDF scan, up to 12 pages. Messy handwriting is fine.
           </p>
         </div>
         <Button
@@ -68,12 +72,16 @@ export function HandwritingUpload({
         </Button>
       </div>
 
-      {stage ? <p className="text-[11px] text-muted-foreground">{stage}</p> : null}
+      {stage ? (
+        <p className="text-[11px] text-muted-foreground">{stage}</p>
+      ) : mutation.isSuccess ? (
+        <p className="text-[11px] text-muted-foreground">Review transcription before grading.</p>
+      ) : null}
 
       <input
         ref={input}
         type="file"
-        accept="image/*,application/pdf"
+        accept="image/jpeg,image/jpg,image/png,application/pdf"
         multiple
         capture="environment"
         className="hidden"
