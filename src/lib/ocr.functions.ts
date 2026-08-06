@@ -38,6 +38,7 @@ export const transcribeHandwriting = createServerFn({ method: "POST" })
       await supabase.from("ai_usage_log").insert({
         user_id: userId,
         feature: "transcribe_handwriting",
+        model: "google/gemini-3.6-flash",
         ok: false,
         error_message: error instanceof Error ? error.message : "Unknown error",
       });
