@@ -10,7 +10,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 
 import { chat } from "../ai.server";
 import { renderContext, retrieve } from "../retrieval.server";
-import { MODEL_EXAMINER, TEMPERATURE_EXAMINER } from "../examiner/config";
+import { AO_MAX_MARKS, MODEL_EXAMINER, TEMPERATURE_EXAMINER } from "../examiner/config";
 import { extractFirstJsonObject } from "../examiner/json";
 import type { GroundingSource } from "../examiner/types";
 
@@ -58,11 +58,12 @@ export const AO_BRIEF: Record<AoTarget, { label: string; skill: string; rubric: 
   },
 };
 
-const RESPONSE_CONTRACT = `
+function responseContract(maxMarks: number): string {
+  return `
 Return ONLY one JSON object with exactly this shape:
 {
   "verdict": string,              // one sentence: is this point credit-worthy as written?
-  "score": number,                // 0-5 quality of THIS single point
+  "score": number,                // marks awarded to THIS single point, 0-${maxMarks} (whole or half marks)
   "score_label": string,          // e.g. "Asserted, not analysed"
   "what_works": string[],         // quote the student's own words where possible
   "what_is_missing": string[],    // the specific missing requirement, named
@@ -78,10 +79,12 @@ Return ONLY one JSON object with exactly this shape:
 Every item must quote or refer to the student's actual words. Never give generic advice.
 "example" must be a usable sentence the student could write, in their context.
 `.trim();
+}
 
 export type CoachOutcome = {
   verdict: string;
   score: number;
+  maxScore: number;
   scoreLabel: string;
   whatWorks: string[];
   whatIsMissing: string[];
@@ -109,6 +112,7 @@ export async function coachPoint(
   options: { ao: AoTarget; question: string; pointText: string; useRetrieval?: boolean },
 ): Promise<CoachOutcome> {
   const brief = AO_BRIEF[options.ao];
+  const maxMarks = AO_MAX_MARKS[options.ao];
 
   let sources: GroundingSource[] = [];
   if (options.useRetrieval !== false) {
@@ -130,11 +134,15 @@ export async function coachPoint(
     "",
     brief.rubric,
     "",
+    `${brief.label} carries ${maxMarks} marks in a Cambridge evaluative`,
+    "essay (AO1 2, AO2 6, AO3 4). Award this point a mark out of",
+    `${maxMarks} on that tariff — never on a 5-point scale.`,
+    "",
     "Teach: name the requirement that is missing, show the exact wording change, and rewrite",
     "their point at exam standard using THEIR economics — never substitute a different argument.",
     sources.length > 0 ? `\n${renderContext(sources)}` : "",
     "",
-    RESPONSE_CONTRACT,
+    responseContract(maxMarks),
   ].join("\n");
 
   const userMessage =
@@ -160,7 +168,10 @@ export async function coachPoint(
 
   return {
     verdict: typeof raw.verdict === "string" ? raw.verdict : "",
-    score: Number.isFinite(score) ? Math.max(0, Math.min(5, Math.round(score))) : 0,
+    score: Number.isFinite(score)
+      ? Math.max(0, Math.min(maxMarks, Math.round(score * 2) / 2))
+      : 0,
+    maxScore: maxMarks,
     scoreLabel: typeof raw.score_label === "string" ? raw.score_label : "",
     whatWorks: strings(raw.what_works),
     whatIsMissing: strings(raw.what_is_missing),

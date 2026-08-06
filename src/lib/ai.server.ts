@@ -252,3 +252,58 @@ export async function embedOne(input: string, model: string): Promise<number[]> 
   if (!vector) throw new AiGatewayError("The AI returned no embedding.", 500);
   return vector;
 }
+
+/**
+ * Multimodal read of one or more page images (scans/photos of handwriting).
+ * Always goes through the Lovable gateway: a bring-your-own text-only provider
+ * key cannot read images, and transcription must never silently fail.
+ */
+export async function visionChat(options: {
+  model: string;
+  systemPrompt: string;
+  prompt: string;
+  imageDataUrls: string[];
+}): Promise<ChatResult> {
+  const started = Date.now();
+
+  const response = await fetch(`${GATEWAY}/chat/completions`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Lovable-API-Key": apiKey(),
+    },
+    body: JSON.stringify({
+      model: options.model,
+      messages: [
+        { role: "system", content: options.systemPrompt },
+        {
+          role: "user",
+          content: [
+            { type: "text", text: options.prompt },
+            ...options.imageDataUrls.map((url) => ({
+              type: "image_url" as const,
+              image_url: { url },
+            })),
+          ],
+        },
+      ],
+    }),
+  });
+
+  if (!response.ok) {
+    throw new AiGatewayError(explain(response.status, await response.text()), response.status);
+  }
+
+  const data = (await response.json()) as {
+    choices?: { message?: { content?: string } }[];
+    usage?: { prompt_tokens?: number; completion_tokens?: number };
+  };
+
+  return {
+    text: data.choices?.[0]?.message?.content ?? "",
+    model: options.model,
+    promptTokens: data.usage?.prompt_tokens ?? null,
+    completionTokens: data.usage?.completion_tokens ?? null,
+    latencyMs: Date.now() - started,
+  };
+}

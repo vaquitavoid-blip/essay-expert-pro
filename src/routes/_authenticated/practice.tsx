@@ -6,6 +6,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 
 import { PageHeader } from "@/components/app/app-shell";
+import { HandwritingUpload } from "@/components/app/handwriting-upload";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -33,6 +34,9 @@ export const Route = createFileRoute("/_authenticated/practice")({
 });
 
 type Ao = "ao1" | "ao2" | "ao3";
+
+/** Cambridge weights an evaluative essay AO1 2 : AO2 6 : AO3 4. */
+const AO_MARKS: Record<Ao, number> = { ao1: 2, ao2: 6, ao3: 4 };
 
 const TABS: {
   key: Ao;
@@ -157,6 +161,14 @@ function PracticePage() {
               </p>
             </div>
 
+            <HandwritingUpload
+              hint={question}
+              label="Upload handwriting"
+              onText={(text) =>
+                setPointText((current) => (current.trim() ? `${current.trim()}\n\n${text}` : text))
+              }
+            />
+
             <Button
               disabled={mutation.isPending || question.trim().length < 5 || pointText.trim().length < 20}
               onClick={() => mutation.mutate()}
@@ -196,7 +208,9 @@ function PracticePage() {
                 <div className="flex flex-wrap items-center gap-3">
                   <span className={cn("text-3xl font-semibold tabular-nums", active.text)}>
                     {feedback.score}
-                    <span className="text-base text-muted-foreground">/5</span>
+                    <span className="text-base text-muted-foreground">
+                      /{feedback.maxScore ?? AO_MARKS[ao]}
+                    </span>
                   </span>
                   {feedback.scoreLabel ? (
                     <Badge variant="secondary">{feedback.scoreLabel}</Badge>

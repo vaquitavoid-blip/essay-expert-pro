@@ -14,6 +14,13 @@ export const DEFAULT_AO_SPLIT = {
 
 export type AoSplit = { ao1_marks: number; ao2_marks: number; ao3_marks: number };
 
+/**
+ * Marks available for a single point when coached in isolation. Cambridge
+ * weights an evaluative essay 2 knowledge : 6 analysis : 4 evaluation, so the
+ * AO skills coach scores out of those same tariffs, never out of 5.
+ */
+export const AO_MAX_MARKS = { ao1: 2, ao2: 6, ao3: 4 } as const;
+
 /** Near-zero variance: consistent, reliable grading. */
 export const TEMPERATURE_EXAMINER = 0;
 export const TEMPERATURE_TUTOR = 0.4;
