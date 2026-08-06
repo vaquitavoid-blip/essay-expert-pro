@@ -134,7 +134,7 @@ export async function coachPoint(
     "",
     brief.rubric,
     "",
-    `${brief.label} carries ${maxMarks} mark${maxMarks === 1 ? "" : "s"} in a Cambridge evaluative`,
+    `${brief.label} carries ${maxMarks} marks in a Cambridge evaluative`,
     "essay (AO1 2, AO2 6, AO3 4). Award this point a mark out of",
     `${maxMarks} on that tariff — never on a 5-point scale.`,
     "",
