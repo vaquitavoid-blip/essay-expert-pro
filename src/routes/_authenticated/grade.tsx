@@ -6,6 +6,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 
 import { PageHeader } from "@/components/app/app-shell";
+import { HandwritingUpload } from "@/components/app/handwriting-upload";
 import { MarkBreakdown } from "@/components/app/mark-breakdown";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -126,6 +127,13 @@ function GradePage() {
               onChange={(event) => setEssayText(event.target.value)}
             />
           </div>
+
+          <HandwritingUpload
+            hint={question}
+            onText={(text) =>
+              setEssayText((current) => (current.trim() ? `${current.trim()}\n\n${text}` : text))
+            }
+          />
 
           <div className="space-y-3 rounded-lg border border-border bg-muted/30 p-4">
             <Toggle
