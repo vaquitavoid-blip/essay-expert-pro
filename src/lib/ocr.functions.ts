@@ -18,27 +18,29 @@ export const transcribeHandwriting = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => TranscribeInput.parse(input))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
-    const { transcribeHandwritingImages } = await import("./ocr/handwriting.server");
+    const { transcribeWithGemini } = await import("./ocr/gemini.server");
 
     try {
-      const outcome = await transcribeHandwritingImages(data.images, data.hint);
+      const outcome = await transcribeWithGemini(data.images, data.hint);
 
       await supabase.from("ai_usage_log").insert({
         user_id: userId,
         feature: "transcribe_handwriting",
         model: outcome.model,
-        prompt_tokens: outcome.promptTokens,
-        completion_tokens: outcome.completionTokens,
         latency_ms: outcome.latencyMs,
         ok: true,
       });
 
-      return { text: outcome.text, pages: data.images.length };
+      return {
+        text: outcome.text,
+        pages: outcome.pages,
+        failedPages: outcome.failedPages,
+      };
     } catch (error) {
       await supabase.from("ai_usage_log").insert({
         user_id: userId,
         feature: "transcribe_handwriting",
-        model: "google/gemini-3.6-flash",
+        model: "models/gemini-2.5-flash",
         ok: false,
         error_message: error instanceof Error ? error.message : "Unknown error",
       });
